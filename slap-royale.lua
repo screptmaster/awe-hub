@@ -35,6 +35,8 @@ if game.PlaceId == 9431156611 then
   Anti_Acid.Anchored = true
 
   Anti_Acid.CanCollide = false
+  
+  Anti_Acid.Name = "AntiAcid"
 
   bunkerPart = Instance.new("Part")
 
@@ -75,6 +77,8 @@ if game.PlaceId == 9431156611 then
   Anti_Lava.Transparency = 1
 
   Anti_Lava.CanCollide = false
+
+  Anti_Lava.Name = "AntiLava"
 
   if #game.Players:GetChildren() < 10 then
 
@@ -256,7 +260,7 @@ local AntiAcid = STab:Toggle({
     Default = false,
     Callback = function(state) 
         
-        Anti_Acid.CanCollide = state
+        workspace:FindFirstChild("AntiAcid").CanCollide = state
 
     end
 })
@@ -269,7 +273,7 @@ local AntiLava = STab:Toggle({
     Default = false,
     Callback = function(state) 
         
-        Anti_Lava.CanCollide = state
+        workspace:FindFirstChild("AntiLava").CanCollide = state
 
     end
 })
