@@ -460,13 +460,21 @@ local function itemsAvailable()
 
     local ItemsPossible = 0
 
-    for _, item in game:GetService("Workspace"):WaitForChild("Items"):GetChildren() do
+    for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
         
         local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
         if bunkerDistance >= 110 and uncollectableList[item] == false then
             
-            ItemsPossible += 1
+            ItemsPossible = ItemsPossible + 1
+
+        elseif uncollectableList[item] then
+
+            print("is uncollectableList")
+
+        elseif bunkerDistance < 110 then
+
+            print("too close to bunker")
 
         end
 
@@ -494,7 +502,7 @@ local function findNearestItem()
 
         local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
-        if distance < nearestDistance and bunkerDistance >= 110 and uncollectableList[item] == false then
+        if distance < nearestDistance and bunkerDistance >= 110 and not uncollectableList[item] then
                     
             nearestDistance = distance
             nearestItem = item
@@ -711,7 +719,7 @@ local GrabAll = ITab:Button({
     Locked = false,
     Callback = function()
 
-    if graballdb then
+    if graballdb and itemsAvailable() > 0 then
 
         graballdb = false
 
@@ -748,6 +756,15 @@ local GrabAll = ITab:Button({
         game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
 
         graballdb = true
+
+    elseif itemsAvailable() == 0 then
+
+        WindUI:Notify({
+            Title = "No Items",
+            Content = "There are no more items for you to pick up",
+            Duration = 3, -- 3 seconds
+            Icon = "info",
+        })
 
     end
 
@@ -813,7 +830,7 @@ local UnderMap = Tab:Toggle({
     
             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(x, 200, z)
 
-        elseif onExecTP == false and started then
+        elseif onExecTP == false then
             
             onExecTP = true
 
@@ -909,7 +926,7 @@ local KillPlayer = PTab:Button({
         if game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and not game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started then
 
         ItemTP:Lock()
-        --GrabAll:Lock()
+        GrabAll:Lock()
         killing = true
 
         local oldCFrame = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
@@ -940,9 +957,14 @@ local KillPlayer = PTab:Button({
 
         task.wait(tweenTime)
 
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
         repeat
             
-            game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-10,0)
+            local targetCFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame
+
+            game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, targetCFrame.Y - 10, targetCFrame.Z)
 
             game:GetService("ReplicatedStorage").Events.Slap:FireServer(game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Left Leg"))
 
@@ -959,8 +981,10 @@ local KillPlayer = PTab:Button({
         game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
 
         ItemTP:Unlock()
-        --GrabAll:Unlock()
+        GrabAll:Unlock()
         killing = false
+        AcidPart.CanTouch = true
+        LavaPart.CanTouch = true
 
         elseif game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started then
 
@@ -988,6 +1012,9 @@ local TpPlayer = PTab:Button({
             local plrX = plrCFrame.X
             local plrZ = plrCFrame.Z
 
+            AcidPart.CanTouch = false
+            LavaPart.CanTouch = false
+
             UnderSet()
 
             local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Torso").Position).Magnitude
@@ -1009,6 +1036,9 @@ local TpPlayer = PTab:Button({
             task.wait(tweenTime)
 
             game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = plrCFrame * CFrame.new(0,10,0)
+
+            AcidPart.CanTouch = true
+            LavaPart.CanTouch = true
 
         end
 
