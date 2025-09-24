@@ -582,11 +582,7 @@ local function grabItemNoDB()
 
         until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
 
-        if timespent >= 3 and nItem == workspace:FindFirstChild("Items") then
-            
-            table.insert(uncollectableList, nItem)
-
-        end
+        uncollectableList[nItem] = true
 
         AcidPart.CanTouch = true
         LavaPart.CanTouch = true
