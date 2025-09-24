@@ -6,7 +6,7 @@ local queueonteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or 
 
 if queueonteleport then
 
-	queueonteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/screptmaster/awe-hub/refs/heads/main/slap-royale.lua'))()")
+	queueonteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/screptmaster/awe-hub/main/slap-royale.lua'))()")
 
 end
 
