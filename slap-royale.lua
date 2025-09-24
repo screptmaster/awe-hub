@@ -80,14 +80,15 @@ if game.PlaceId == 9431156611 then
 
   Anti_Lava.Name = "AntiLava"
 
-  if #game.Players:GetChildren() < 10 then
+  LavaPart = game:GetService("Workspace"):WaitForChild("Map"):WaitForChild("DragonDepths"):WaitForChild("Lava")
+  
+  for _, acid in game:GetService("Workspace"):WaitForChild("Map"):WaitForChild("AcidAbnormality"):GetChildren() do
+    
+    if acid.Name == "Acid" and acid:IsA("Part") then
+        
+        AcidPart = acid
 
-        WindUI:Notify({
-            Title = "Match cannot Start",
-            Content = "There aren't enough players to start the match.",
-            Duration = 3, -- 3 seconds
-            Icon = "info",
-        })
+    end
 
   end
 
@@ -392,7 +393,7 @@ end
 
 local ItemESP = ITab:Dropdown({
     Title = "Item ESP",
-    Values = {"Bull's essence", "True Power", "Potion of Strength", "Boba", "Apple", "Bandage", "First Aid Kit", "Cube of Ice", "Frog Potion", "Speed Potion", "Lightning Potion", "Healing Potion"},
+    Values = {"Bull's essence", "True Power", "Potion of Strength", "Boba", "Bomb", "Forcefield Crystal", "Apple", "Bandage", "First Aid Kit", "Cube of Ice", "Frog Potion", "Speed Potion", "Lightning Potion", "Healing Potion"},
     Value = "Select...",
     Callback = function(item) 
         
@@ -453,7 +454,70 @@ local function findNearest(name)
     
 end
 
---[[local function grabItemNoDB(nItem, GoToOld)
+local function itemsAvailable()
+
+    local ItemsPossible = 0
+
+    for _, item in game:GetService("Workspace"):WaitForChild("Items"):GetChildren() do
+        
+        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
+
+        if bunkerDistance >= 110 then
+            
+            ItemsPossible = ItemsPossible + 1
+
+        end
+
+    end
+
+    return ItemsPossible
+
+end
+
+local uncollectableList = {}
+
+local function findNearestItem()
+
+    local nearestDistance = 100000
+
+    local nearestItem
+
+    if itemsAvailable() == 0 then
+
+        return 0
+
+    else
+
+    for _, item in game:GetService("Workspace"):WaitForChild("Items"):GetChildren() do
+                
+        local distance = (item.Handle.Position - game:GetService("Players").LocalPlayer.Character.Torso.Position).Magnitude
+
+        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
+
+        if distance < nearestDistance and bunkerDistance >= 110 and uncollectableList[item] == false then
+                    
+            nearestDistance = distance
+            nearestItem = item
+
+        end
+
+    end
+
+    return nearestItem
+
+    end
+    
+end
+
+local function grabItemNoDB()
+
+        local nItem = findNearestItem()
+
+        if nItem == 0 then
+
+            return 0
+
+        end
 
         local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - nItem.Handle.Position).Magnitude
 
@@ -461,13 +525,17 @@ end
 
         local tweenTime = 3
 
-        if distance >= 1500 and distance <= 3000 then
+        if distance >= 700 and distance <= 900 then
             
-            tweenTime = 10
+            tweenTime = 5
 
-        elseif distance >= 3000 then
+        elseif distance >= 900 and distance <= 1500 then
 
-            tweenTime = 16
+            tweenTime = 7
+
+        elseif distance >= 1500 then
+
+            tweenTime = 9
 
         end
 
@@ -479,11 +547,14 @@ end
         local ItemX = itemCFrame.X
         local ItemZ = itemCFrame.Z
 
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
+        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
         
         task.wait(tweenTime)
 
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = nItem.Handle.CFrame * CFrame.new(0,3,0)}):Play()
+        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX + 2, nItem.Handle.CFrame.Y + 3.5, ItemZ)}):Play()
 
         task.wait(1)
 
@@ -503,21 +574,28 @@ end
 
         game:GetService("VirtualInputManager"):SendKeyEvent(true,"F",false,game)
 
-        game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = nItem.Handle.CFrame * CFrame.new(0,3,0)
-
         game:GetService("VirtualInputManager"):SendKeyEvent(false,"F",false,game)
 
-        task.wait()
+        task.wait(.05)
 
-        until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 5
+        until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
+
+        if timespent >= 3 then
+            
+            uncollectableList[nItem] = true
 
         end
 
-end]]
+        AcidPart.CanTouch = true
+        LavaPart.CanTouch = true
+
+        end
+
+end
 
 local ItemTP = ITab:Dropdown({
     Title = "Grab Nearest Item",
-    Values = {"Bull's essence", "True Power", "Potion of Strength", "Boba", "Apple", "Bandage", "First Aid Kit", "Cube of Ice", "Frog Potion", "Speed Potion", "Lightning Potion", "Healing Potion"},
+    Values = {"Bull's essence", "True Power", "Potion of Strength", "Boba", "Bomb", "Forcefield Crystal", "Apple", "Bandage", "First Aid Kit", "Cube of Ice", "Frog Potion", "Speed Potion", "Lightning Potion", "Healing Potion"},
     Value = "Select...",
     Callback = function(item) 
 
@@ -554,13 +632,16 @@ local ItemTP = ITab:Dropdown({
             local itemCFrame = nItem.Handle.CFrame
             local ItemX = itemCFrame.X
             local ItemZ = itemCFrame.Z
+
+            AcidPart.CanTouch = false
+            LavaPart.CanTouch = false
     
-            game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
+            game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
             
             task.wait(tweenTime)
     
-            game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = nItem.Handle.CFrame * CFrame.new(0,3,0)}):Play()
-    
+            game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX + 2, nItem.Handle.CFrame.Y + 3.5, ItemZ)}):Play()
+
             task.wait(1)
 
             local timespent = 0
@@ -580,8 +661,6 @@ local ItemTP = ITab:Dropdown({
             task.wait(.1)
 
             game:GetService("VirtualInputManager"):SendKeyEvent(true,"F",false,game)
-    
-            game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = nItem.Handle.CFrame * CFrame.new(0,3,0)
 
             task.wait(.1)
     
@@ -598,6 +677,9 @@ local ItemTP = ITab:Dropdown({
             task.wait(tweenTime)
     
             game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
+
+            AcidPart.CanTouch = true
+            LavaPart.CanTouch = true
     
             TPdb = true
     
@@ -621,21 +703,27 @@ local ItemTP = ITab:Dropdown({
     end
 })
 
---[[local GrabAll = ITab:Button({
+local graballdb = true
+
+local GrabAll = ITab:Button({
     Title = "Grab All Items",
     Desc = "Smoothly teleports under the map and grabs all items.",
     Locked = false,
     Callback = function()
-        
+
+    if graballdb then
+
+        graballdb = false
+
         local oldCFrame = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
         local oldX = oldCFrame.X
         local oldZ = oldCFrame.Z
 
-        for _, item in ipairs(workspace:WaitForChild("Items"):GetChildren()) do
-            
-            grabItemNoDB(item)
+        repeat
 
-        end
+            grabItemNoDB()
+
+        until grabItemNoDB() == 0
 
         UnderSet()
 
@@ -653,14 +741,18 @@ local ItemTP = ITab:Dropdown({
 
         end
 
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = CFrame.new(oldX, -80, oldZ)}):Play()
+        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(oldX, -80, oldZ)}):Play()
 
         task.wait(tweenTime)
 
         game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
 
+        graballdb = true
+
     end
-})]]
+
+    end
+})
 
 local SlapAura = CTab:Toggle({
     Title = "Slap Aura",
