@@ -462,7 +462,7 @@ local function itemsAvailable()
 
     for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
         
-        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
+        local bunkerDistance = (bunkerPart.CFrame.Position - item.Handle.CFrame.Position).Magnitude
 
         if bunkerDistance >= 110 and uncollectableList[item] == false then
             
@@ -500,7 +500,7 @@ local function findNearestItem()
                 
         local distance = (item.Handle.Position - game:GetService("Players").LocalPlayer.Character.Torso.Position).Magnitude
 
-        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
+        local bunkerDistance = (bunkerPart.CFrame.Position - item.Handle.CFrame.Position).Magnitude
 
         if distance < nearestDistance and bunkerDistance >= 110 and not uncollectableList[item] then
                     
@@ -527,9 +527,9 @@ local function grabItemNoDB()
 
         end
 
-        local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - nItem.Handle.Position).Magnitude
+        local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").CFrame.Position - nItem.Handle.CFrame.Position).Magnitude
 
-        local bunkerDistance = (bunkerPart.Position - nItem.Handle.Position).Magnitude
+        local bunkerDistance = (bunkerPart.CFrame.Position - nItem.Handle.CFrame.Position).Magnitude
 
         local tweenTime = 3
 
@@ -951,7 +951,7 @@ local KillPlayer = PTab:Button({
 
         UnderSet()
 
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-10,0)}):Play()
+        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-15,0)}):Play()
 
         glove.Parent = game.Players.LocalPlayer.Character
 
@@ -964,7 +964,7 @@ local KillPlayer = PTab:Button({
             
             local targetCFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame
 
-            game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, targetCFrame.Y - 10, targetCFrame.Z)
+            game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, targetCFrame.Y - 15, targetCFrame.Z)
 
             game:GetService("ReplicatedStorage").Events.Slap:FireServer(game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Left Leg"))
 
