@@ -38,7 +38,7 @@ if game.PlaceId == 9431156611 then
   
   Anti_Acid.Name = "AntiAcid"
 
-  bunkerPart = Instance.new("Part")
+  local bunkerPart = Instance.new("Part")
 
   bunkerPart.CFrame = CFrame.new(443.018310546875, 29.313093185424805, 316.2210998535156)
 
@@ -462,19 +462,13 @@ local function itemsAvailable()
 
     for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
         
-        local bunkerDistance = (bunkerPart.CFrame.Position - item.Handle.CFrame.Position).Magnitude
+        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
-        if bunkerDistance >= 110 and uncollectableList[item] == false then
+        print("bunker distance: "..bunkerDistance)
+
+        if bunkerDistance >= 110 and not uncollectableList[item] then
             
             ItemsPossible = ItemsPossible + 1
-
-        elseif uncollectableList[item] then
-
-            print("is uncollectableList")
-
-        elseif bunkerDistance < 110 then
-
-            print("too close to bunker")
 
         end
 
@@ -500,7 +494,7 @@ local function findNearestItem()
                 
         local distance = (item.Handle.Position - game:GetService("Players").LocalPlayer.Character.Torso.Position).Magnitude
 
-        local bunkerDistance = (bunkerPart.CFrame.Position - item.Handle.CFrame.Position).Magnitude
+        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
         if distance < nearestDistance and bunkerDistance >= 110 and not uncollectableList[item] then
                     
