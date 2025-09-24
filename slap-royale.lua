@@ -454,6 +454,8 @@ local function findNearest(name)
     
 end
 
+local uncollectableList = {}
+
 local function itemsAvailable()
 
     local ItemsPossible = 0
@@ -462,9 +464,9 @@ local function itemsAvailable()
         
         local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
-        if bunkerDistance >= 110 then
+        if bunkerDistance >= 110 and uncollectableList[item] == false then
             
-            ItemsPossible = ItemsPossible + 1
+            ItemsPossible += 1
 
         end
 
@@ -473,8 +475,6 @@ local function itemsAvailable()
     return ItemsPossible
 
 end
-
-local uncollectableList = {}
 
 local function findNearestItem()
 
@@ -580,9 +580,9 @@ local function grabItemNoDB()
 
         until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
 
-        if timespent >= 3 then
+        if timespent >= 3 and nItem == workspace:FindFirstChild("Items") then
             
-            uncollectableList[nItem] = true
+            table.insert(uncollectableList, nItem)
 
         end
 
@@ -944,7 +944,7 @@ local KillPlayer = PTab:Button({
             
             game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-10,0)
 
-            game:GetService("ReplicatedStorage").Events.Slap:FireServer(game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Torso"))
+            game:GetService("ReplicatedStorage").Events.Slap:FireServer(game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Left Leg"))
 
             task.wait()
 
