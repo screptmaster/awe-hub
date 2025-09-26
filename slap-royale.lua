@@ -577,14 +577,14 @@ local function grabItemNoDB()
 
         if isStarted then
 
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
         UnderSet()
 
         local itemCFrame = nItem.Handle.CFrame
         local ItemX = itemCFrame.X
         local ItemZ = itemCFrame.Z
-
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
 
         game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
         
@@ -1287,42 +1287,6 @@ local RJMatchmaking = Tab:Button({
     
     while task.wait() do
 
-        spawn(function()
-            
-            while _G.autoperm == true and task.wait() do
-                
-                for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
-                    
-                    local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
-
-                    if perm[item.Name] then
-                        
-                        item.Parent = game.Players.LocalPlayer.Character
-                        item:Activate()
-
-                    end
-
-                end
-
-            end
-
-            while _G.autoice == true and task.wait() do
-                
-                for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
-                    
-                    if item.Name == "Cube of Ice" then
-                        
-                        item.Parent = game.Players.LocalPlayer.Character
-                        item:Activate()
-
-                    end
-
-                end
-
-            end
-
-        end)
-
         local localPlayer = game.Players.LocalPlayer
         local Players = game.Players
 
@@ -1332,7 +1296,7 @@ local RJMatchmaking = Tab:Button({
 
             task.wait(.2)
             
-            if localPlayer.Character.Humanoid.Health <= _G.autohealhp and healDB then
+            if localPlayer.Character.Humanoid.Health <= tonumber(_G.autohealhp) and healDB then
 
                 healDB = false
 
@@ -1361,5 +1325,45 @@ local RJMatchmaking = Tab:Button({
     end
 
   end)
+
+spawn(function()
+
+    while _G.autoperm == true and task.wait() do
+                
+        for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
+            
+            local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
+    
+            if perm[item.Name] then
+                
+                item.Parent = game.Players.LocalPlayer.Character
+                item:Activate()
+    
+            end
+    
+        end
+    
+    end
+
+end)
+
+spawn(function()
+
+    while _G.autoice == true and task.wait() do
+        
+        for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
+            
+            if item.Name == "Cube of Ice" then
+                
+                item.Parent = game.Players.LocalPlayer.Character
+                item:Activate()
+
+            end
+
+        end
+
+    end
+
+end)
 
 end -- END OF SR SCRIPT, CODE MUST BE WITHIN THIS IF STATEMENT
