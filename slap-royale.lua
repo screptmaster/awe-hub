@@ -6,7 +6,7 @@ local queueonteleport = (syn and syn.queue_on_teleport) or queue_on_teleport or 
 
 if queueonteleport then
 
-	queueonteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/screptmaster/awe-hub/main/slap-royale.lua'))()")
+	queueonteleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/screptmaster/awe-hub/refs/heads/main/slap-royale.lua'))()")
 
 end
 
@@ -38,7 +38,7 @@ if game.PlaceId == 9431156611 then
   
   Anti_Acid.Name = "AntiAcid"
 
-  local bunkerPart = Instance.new("Part")
+  bunkerPart = Instance.new("Part")
 
   bunkerPart.CFrame = CFrame.new(443.018310546875, 29.313093185424805, 316.2210998535156)
 
@@ -387,7 +387,9 @@ local function UnderSet()
     local CX = CFrameFull.X
     local CZ = CFrameFull.Z
 
-    game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(CX, -80, CZ)
+
+    game:GetService("TweenService"):Create(game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(CX, -80, CZ)}):Play()
+    task.wait(1.5)
 
 end
 
@@ -454,29 +456,43 @@ local function findNearest(name)
     
 end
 
-local uncollectableList = {}
+local ItemsPossible = false
 
-local function itemsAvailable()
-
-    local ItemsPossible = 0
-
-    for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
+spawn(function()
         
-        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
-
-        print("bunker distance: "..bunkerDistance)
-
-        if bunkerDistance >= 110 and not uncollectableList[item] then
+    while task.wait(1) do
+        
+        for _, item in ipairs(game:GetService("Workspace"):FindFirstChild("Items"):GetChildren()) do
+        
+            local bunkerDistance = (item.Handle.Position - bunkerPart.Position).Magnitude
+    
+            print("bunker distance: "..bunkerDistance)
+    
+            if bunkerDistance >= 110 then
+                
+                ItemsPossible = true
+    
+            end
+    
+        end
+    
+        if ItemsPossible ~= true then
             
-            ItemsPossible = ItemsPossible + 1
-
+            print("no items available")
+    
+            return ItemsPossible
+    
+        else
+    
+            print("items possible")
+    
+            return false
+    
         end
 
     end
 
-    return ItemsPossible
-
-end
+end)
 
 local function findNearestItem()
 
@@ -484,19 +500,27 @@ local function findNearestItem()
 
     local nearestItem
 
-    if itemsAvailable() == 0 then
+    if ItemsPossible == false then
 
-        return 0
+        print("NO ITEMS AVAILABLE FINDNEARESTITEM")
+
+        return false
 
     else
 
-    for _, item in game:GetService("Workspace"):WaitForChild("Items"):GetChildren() do
+    for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
+
+        print("for loop, current item : "..item.Name)
                 
         local distance = (item.Handle.Position - game:GetService("Players").LocalPlayer.Character.Torso.Position).Magnitude
 
+        print("findnearestitem distance : "..distance)
+
         local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
-        if distance < nearestDistance and bunkerDistance >= 110 and not uncollectableList[item] then
+        print("findnearestitem bunkerdistance : "..bunkerDistance)
+
+        if distance < nearestDistance and bunkerDistance >= 110 then
                     
             nearestDistance = distance
             nearestItem = item
@@ -513,11 +537,19 @@ end
 
 local function grabItemNoDB()
 
+        local isStarted = started
+
+        print("grabitemnodb")
+
         local nItem = findNearestItem()
 
-        if nItem == 0 then
+        print("grabitemnodb passed all. problem is grabitemnodb")
 
-            return 0
+        if nItem == false then
+
+            print("no item grabitemnodb")
+
+            return false
 
         end
 
@@ -542,6 +574,8 @@ local function grabItemNoDB()
         end
 
         if bunkerDistance >= 110 then
+
+        if isStarted then
 
         UnderSet()
 
@@ -582,10 +616,58 @@ local function grabItemNoDB()
 
         until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
 
-        uncollectableList[nItem] = true
+        if nItem.Parent == workspace:FindFirstChild("Items") then
+            
+            nItem.Parent = workspace
+
+        end
 
         AcidPart.CanTouch = true
         LavaPart.CanTouch = true
+
+    else
+
+        local itemCFrame = nItem.Handle.CFrame
+
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
+        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX + 2, itemCFrame.Y + 3.5, ItemZ)}):Play()
+        
+        task.wait(tweenTime)
+
+        local timespent = 0
+
+        spawn(function()
+            
+            while task.wait(1) do
+                
+                timespent += 1
+
+            end
+
+        end)
+
+        repeat
+
+        game:GetService("VirtualInputManager"):SendKeyEvent(true,"F",false,game)
+
+        game:GetService("VirtualInputManager"):SendKeyEvent(false,"F",false,game)
+
+        task.wait(.05)
+
+        until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
+
+        if nItem.Parent == workspace:FindFirstChild("Items") then
+            
+            nItem.Parent = workspace
+
+        end
+
+        AcidPart.CanTouch = true
+        LavaPart.CanTouch = true
+
+    end
 
         end
 
@@ -613,13 +695,17 @@ local ItemTP = ITab:Dropdown({
     
             local tweenTime = 4
     
-            if distance >= 1500 and distance <= 3000 then
-                
-                tweenTime = 10
+            if distance >= 700 and distance <= 900 then
+            
+                tweenTime = 5
     
-            elseif distance >= 3000 then
+            elseif distance >= 900 and distance <= 1500 then
     
-                tweenTime = 16
+                tweenTime = 7
+    
+            elseif distance >= 1500 then
+    
+                tweenTime = 9
     
             end
     
@@ -666,7 +752,13 @@ local ItemTP = ITab:Dropdown({
     
             task.wait(.1)
     
-            until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 5
+            until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
+
+            if nItem.Parent == workspace:FindFirstChild("Items") then
+                
+                nItem.Parent = workspace
+
+            end
     
             UnderSet()
     
@@ -709,45 +801,23 @@ local GrabAll = ITab:Button({
     Locked = false,
     Callback = function()
 
-    if graballdb and itemsAvailable() > 0 then
+        print("graballbutton")
+
+    if graballdb and ItemsPossible == true then
+
+        print("exists and stuff grabitemall")
 
         graballdb = false
-
-        local oldCFrame = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
-        local oldX = oldCFrame.X
-        local oldZ = oldCFrame.Z
 
         repeat
 
             grabItemNoDB()
 
-        until grabItemNoDB() == 0
-
-        UnderSet()
-
-        local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - oldCFrame.Position).Magnitude
-
-        local tweenTime = 3
-
-        if distance >= 1500 and distance <= 3000 then
-            
-            tweenTime = 6
-
-        elseif distance >= 3000 then
-
-            tweenTime = 8
-
-        end
-
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(oldX, -80, oldZ)}):Play()
-
-        task.wait(tweenTime)
-
-        game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
+        until grabItemNoDB() == false
 
         graballdb = true
 
-    elseif itemsAvailable() == 0 then
+    elseif ItemsPossible == false then
 
         WindUI:Notify({
             Title = "No Items",
@@ -757,6 +827,39 @@ local GrabAll = ITab:Button({
         })
 
     end
+
+    end
+})
+
+_G.autoperm = false
+_G.autoice = false
+
+local SettingsSection = ITab:Section({ 
+    Title = "",
+    TextXAlignment = "Left",
+    TextSize = 17, -- Default Size
+})
+
+local AutoPerm = ITab:Toggle({
+    Title = "Auto Use Permanent",
+    Desc = "Uses all items that permanently increase a stat.",
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
+        
+        _G.autoperm = state
+
+    end
+})
+
+local AutoIce = ITab:Toggle({
+    Title = "Auto Use Ice Cubes",
+    Desc = "Uses all ice cubes.",
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
+        
+        _G.autoice = state
 
     end
 })
@@ -1057,15 +1160,32 @@ spawn(function()
 
 end)
 
-local AutoHeal = Tab:Toggle({
-    Title = "Auto-Heal",
-    Desc = "Automatically uses a healing item when HP is below 30.",
-    Icon = "lucide:heart-plus",
+local AutoHeal = ITab:Toggle({
+    Title = "Auto Heal",
+    Desc = "Automatically uses a healing item when HP is under a certain amount.",
     Type = "Checkbox",
     Default = false,
     Callback = function(state) 
         
         _G.autoheal = state
+
+    end
+})
+
+_G.autohealhp = 30
+
+local AutoHealHP = ITab:Slider({
+    Title = "Auto Heal HP Threshold",
+    Step = 5,
+    
+    Value = {
+        Min = 5,
+        Max = 100,
+        Default = 30,
+    },
+    Callback = function(hp)
+        
+        _G.autohealhp = hp
 
     end
 })
@@ -1167,14 +1287,54 @@ local RJMatchmaking = Tab:Button({
     
     while task.wait() do
 
+        spawn(function()
+            
+            while _G.autoperm == true and task.wait() do
+                
+                for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
+                    
+                    local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
+
+                    if perm[item.Name] then
+                        
+                        item.Parent = game.Players.LocalPlayer.Character
+                        item:Activate()
+
+                    end
+
+                end
+
+            end
+
+            while _G.autoice == true and task.wait() do
+                
+                for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
+                    
+                    if item.Name == "Cube of Ice" then
+                        
+                        item.Parent = game.Players.LocalPlayer.Character
+                        item:Activate()
+
+                    end
+
+                end
+
+            end
+
+        end)
+
         local localPlayer = game.Players.LocalPlayer
         local Players = game.Players
+
+        local healDB = true
 
         if _G.autoheal == true then
 
             task.wait(.2)
             
-            if localPlayer.Character.Humanoid.Health <= 50 then
+            if localPlayer.Character.Humanoid.Health <= _G.autohealhp and healDB then
+
+                healDB = false
 
                 for _, item in ipairs(localPlayer.Backpack:GetChildren()) do
                     
@@ -1189,6 +1349,10 @@ local RJMatchmaking = Tab:Button({
                     end
 
                 end
+
+                task.wait(1)
+
+                healDB = true
 
             end
 
