@@ -625,22 +625,6 @@ local function grabItemNoDB()
             
             nItem.Parent = workspace
 
-        elseif nItem.Parent == game.Players.LocalPlayer.Backpack and started then
-
-            if nItem.Name == "Bull's essence" or nItem.Name == "Boba" or nItem.Name == "Potion of Strength" or nItem.Name == "Speed Potion" or nItem.Name == "Frog Potion" and _G.autoperm == true then
-                
-                nItem.Parent = game.Players.LocalPlayer.Character
-                task.wait(.05)
-                nItem:Activate()
-    
-            elseif nItem.Name == "Cube of Ice" and _G.autoice == true then
-    
-                nItem.Parent = game.Players.LocalPlayer.Character
-                task.wait(.05)
-                nItem:Activate()
-    
-            end
-
         end
 
         AcidPart.CanTouch = true
@@ -1008,6 +992,9 @@ local KillPlayer = PTab:Button({
         
         if game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and not game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started then
 
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
         ItemTP:Lock()
         GrabAll:Lock()
         killing = true
@@ -1039,9 +1026,6 @@ local KillPlayer = PTab:Button({
         glove.Parent = game.Players.LocalPlayer.Character
 
         task.wait(tweenTime)
-
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
 
         repeat
             
@@ -1324,13 +1308,13 @@ spawn(function()
         
         local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
 
-        if table.find(perm, item.Name) and _G.autoperm then
+        if table.find(perm, item.Name) and _G.autoperm == true then
             
             item.Parent = game.Players.LocalPlayer.Character
             task.wait(.05)
             item:Activate()
 
-        elseif item.Name == "Cube of Ice" and _G.autoice then
+        elseif item.Name == "Cube of Ice" and _G.autoice == true then
 
             item.Parent = game.Players.LocalPlayer.Character
             task.wait(.05)
