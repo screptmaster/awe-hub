@@ -66,7 +66,11 @@ if game.PlaceId == 9431156611 then
 
   UnderMap.Size = Vector3.new(2048,1,2048)
 
-  workspace:FindFirstChild("Map"):FindFirstChild("AntiUnderMap"):Destroy()
+  if workspace:FindFirstChild("Map"):FindFirstChild("AntiUnderMap") then
+
+    workspace:FindFirstChild("Map"):FindFirstChild("AntiUnderMap"):Destroy()
+
+  end
 
   Anti_Lava = Instance.new("Part", game.Workspace)
 
@@ -124,7 +128,7 @@ Window:Tag({
 
 Window:Tag({
     Title = "Slap Royale",
-    Color = Color3.fromHex("FFFF5757"),
+    Color = Color3.fromHex("#ff4242"),
     Radius = 13,
 })
 
