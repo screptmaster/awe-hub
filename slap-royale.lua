@@ -117,8 +117,14 @@ if game.PlaceId == 9431156611 then
 })
 
 Window:Tag({
-    Title = "Slap Royale",
+    Title = "v1",
     Color = Color3.fromHex("#30ff6a"),
+    Radius = 13,
+})
+
+Window:Tag({
+    Title = "Slap Royale",
+    Color = Color3.fromHex("FFFF5757"),
     Radius = 13,
 })
 
