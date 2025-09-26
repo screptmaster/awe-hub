@@ -458,6 +458,9 @@ end
 
 local ItemsPossible = false
 
+_G.autoperm = false
+_G.autoice = false
+
 spawn(function()
         
     while task.wait(1) do
@@ -577,14 +580,14 @@ local function grabItemNoDB()
 
         if isStarted then
 
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
-
         UnderSet()
 
         local itemCFrame = nItem.Handle.CFrame
         local ItemX = itemCFrame.X
         local ItemZ = itemCFrame.Z
+
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
 
         game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
         
@@ -619,6 +622,24 @@ local function grabItemNoDB()
         if nItem.Parent == workspace:FindFirstChild("Items") then
             
             nItem.Parent = workspace
+
+        elseif nItem.Parent == game.Players.LocalPlayer.Backpack then
+            
+            local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
+
+            if table.find(perm, nItem.Name) and _G.autoperm then
+                
+                nItem.Parent = game.Players.LocalPlayer.Character
+                task.wait(.05)
+                nItem:Activate()
+    
+            elseif nItem.Name == "Cube of Ice" and _G.autoice then
+    
+                nItem.Parent = game.Players.LocalPlayer.Character
+                task.wait(.05)
+                nItem:Activate()
+    
+            end
 
         end
 
@@ -758,6 +779,24 @@ local ItemTP = ITab:Dropdown({
                 
                 nItem.Parent = workspace
 
+            elseif nItem.Parent == game.Players.LocalPlayer.Backpack then
+
+                local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
+
+                if table.find(perm, item.Name) and _G.autoperm then
+                    
+                    nItem.Parent = game.Players.LocalPlayer.Character
+                    task.wait(.05)
+                    nItem:Activate()
+        
+                elseif item.Name == "Cube of Ice" and _G.autoice then
+        
+                    nItem.Parent = game.Players.LocalPlayer.Character
+                    task.wait(.05)
+                    nItem:Activate()
+        
+                end
+
             end
     
             UnderSet()
@@ -830,9 +869,6 @@ local GrabAll = ITab:Button({
 
     end
 })
-
-_G.autoperm = false
-_G.autoice = false
 
 local SettingsSection = ITab:Section({ 
     Title = "",
@@ -1328,41 +1364,29 @@ local RJMatchmaking = Tab:Button({
 
 spawn(function()
 
-    while _G.autoperm == true and task.wait() do
+    while task.wait(.1) do
                 
-        for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
-            
-            local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
-    
-            if perm[item.Name] then
-                
-                item.Parent = game.Players.LocalPlayer.Character
-                item:Activate()
-    
-            end
-    
-        end
-    
-    end
-
-end)
-
-spawn(function()
-
-    while _G.autoice == true and task.wait() do
+    for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
         
-        for _, item in game.Players.LocalPlayer.Backpack:GetChildren() do
-            
-            if item.Name == "Cube of Ice" then
-                
-                item.Parent = game.Players.LocalPlayer.Character
-                item:Activate()
+        local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
 
-            end
+        if table.find(perm, item.Name) and _G.autoperm then
+            
+            item.Parent = game.Players.LocalPlayer.Character
+            task.wait(.05)
+            item:Activate()
+
+        elseif item.Name == "Cube of Ice" and _G.autoice then
+
+            item.Parent = game.Players.LocalPlayer.Character
+            task.wait(.05)
+            item:Activate()
 
         end
 
     end
+
+end
 
 end)
 
