@@ -262,6 +262,7 @@ local AntiAcid = STab:Toggle({
     Callback = function(state) 
         
         workspace:FindFirstChild("AntiAcid").CanCollide = state
+        AcidPart.CanTouch = state
 
     end
 })
@@ -275,6 +276,7 @@ local AntiLava = STab:Toggle({
     Callback = function(state) 
         
         workspace:FindFirstChild("AntiLava").CanCollide = state
+        LavaPart.CanTouch = state
 
     end
 })
@@ -381,7 +383,14 @@ spawn(function()
 
 end)
 
-local function UnderSet()
+local function UnderSet(anti : boolean)
+    
+    if anti == true then
+        
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
+    end
     
     local CFrameFull = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
     local CX = CFrameFull.X
@@ -540,8 +549,6 @@ end
 
 local function grabItemNoDB()
 
-        local isStarted = started
-
         print("grabitemnodb")
 
         local nItem = findNearestItem()
@@ -578,16 +585,11 @@ local function grabItemNoDB()
 
         if bunkerDistance >= 110 then
 
-        if isStarted then
-
-        UnderSet()
+        UnderSet(true)
 
         local itemCFrame = nItem.Handle.CFrame
         local ItemX = itemCFrame.X
         local ItemZ = itemCFrame.Z
-
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
 
         game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
         
@@ -623,17 +625,15 @@ local function grabItemNoDB()
             
             nItem.Parent = workspace
 
-        elseif nItem.Parent == game.Players.LocalPlayer.Backpack then
-            
-            local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
+        elseif nItem.Parent == game.Players.LocalPlayer.Backpack and started then
 
-            if table.find(perm, nItem.Name) and _G.autoperm then
+            if nItem.Name == "Bull's essence" or nItem.Name == "Boba" or nItem.Name == "Potion of Strength" or nItem.Name == "Speed Potion" or nItem.Name == "Frog Potion" and _G.autoperm == true then
                 
                 nItem.Parent = game.Players.LocalPlayer.Character
                 task.wait(.05)
                 nItem:Activate()
     
-            elseif nItem.Name == "Cube of Ice" and _G.autoice then
+            elseif nItem.Name == "Cube of Ice" and _G.autoice == true then
     
                 nItem.Parent = game.Players.LocalPlayer.Character
                 task.wait(.05)
@@ -645,50 +645,6 @@ local function grabItemNoDB()
 
         AcidPart.CanTouch = true
         LavaPart.CanTouch = true
-
-    else
-
-        local itemCFrame = nItem.Handle.CFrame
-
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
-
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX + 2, itemCFrame.Y + 3.5, ItemZ)}):Play()
-        
-        task.wait(tweenTime)
-
-        local timespent = 0
-
-        spawn(function()
-            
-            while task.wait(1) do
-                
-                timespent += 1
-
-            end
-
-        end)
-
-        repeat
-
-        game:GetService("VirtualInputManager"):SendKeyEvent(true,"F",false,game)
-
-        game:GetService("VirtualInputManager"):SendKeyEvent(false,"F",false,game)
-
-        task.wait(.05)
-
-        until nItem.Parent ~= workspace:FindFirstChild("Items") or timespent == 3
-
-        if nItem.Parent == workspace:FindFirstChild("Items") then
-            
-            nItem.Parent = workspace
-
-        end
-
-        AcidPart.CanTouch = true
-        LavaPart.CanTouch = true
-
-    end
 
         end
 
@@ -732,7 +688,7 @@ local ItemTP = ITab:Dropdown({
     
             if bunkerDistance >= 110 then
     
-            UnderSet()
+            UnderSet(true)
     
             local itemCFrame = nItem.Handle.CFrame
             local ItemX = itemCFrame.X
@@ -781,15 +737,13 @@ local ItemTP = ITab:Dropdown({
 
             elseif nItem.Parent == game.Players.LocalPlayer.Backpack then
 
-                local perm = {"Bull's essence", "Boba", "Potion of Strength", "Speed Potion", "Frog Potion"}
-
-                if table.find(perm, item.Name) and _G.autoperm then
-                    
+                if nItem.Name == "Bull's essence" or nItem.Name == "Boba" or nItem.Name == "Potion of Strength" or nItem.Name == "Speed Potion" or nItem.Name == "Frog Potion" and _G.autoperm == true then
+                
                     nItem.Parent = game.Players.LocalPlayer.Character
                     task.wait(.05)
                     nItem:Activate()
         
-                elseif item.Name == "Cube of Ice" and _G.autoice then
+                elseif nItem.Name == "Cube of Ice" and _G.autoice == true then
         
                     nItem.Parent = game.Players.LocalPlayer.Character
                     task.wait(.05)
@@ -799,7 +753,7 @@ local ItemTP = ITab:Dropdown({
 
             end
     
-            UnderSet()
+            UnderSet(true)
     
             game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = CFrame.new(oldX, -80, oldZ)}):Play()
     
