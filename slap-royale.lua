@@ -66,6 +66,8 @@ if game.PlaceId == 9431156611 then
 
   UnderMap.Size = Vector3.new(2048,1,2048)
 
+  workspace:FindFirstChild("Map"):FindFirstChild("AntiUnderMap"):Destroy()
+
   Anti_Lava = Instance.new("Part", game.Workspace)
 
   Anti_Lava.Position = Vector3.new(-238, -43, 401)
