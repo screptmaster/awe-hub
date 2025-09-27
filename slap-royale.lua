@@ -28,7 +28,7 @@ if game.PlaceId == 9431156611 then
 
   Anti_Acid.Size = Vector3.new(154, 26, 132)
 
-  Anti_Acid.Position = Vector3.new(-60, -5, -731)
+  Anti_Acid.Position = Vector3.new(-60, -13, -731)
 
   Anti_Acid.Transparency = 1
 
@@ -265,6 +265,51 @@ spawn(function()
 
 end)
 
+_G.acidtoggle = false
+_G.lavatoggle = false
+
+local function toggleAcid(state)
+
+    _G.acidtoggle = state
+
+    local isEnabled = _G.acidtoggle
+
+    local defaultCFrame = CFrame.new(-60.944313, -17.9404907, -731.109131, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+
+    if isEnabled then
+        
+        AcidPart.CFrame = AcidPart.CFrame * CFrame.new(0,-100,0)
+
+    else
+
+        AcidPart.CFrame = defaultCFrame
+
+    end
+
+end
+
+local function toggleLava(state)
+
+    _G.lavatoggle = state
+
+    local isEnabled = _G.lavatoggle
+
+    local defaultCFrame = CFrame.new(-246.410248, -72.6169968, 382.982361, 0.999966383, 0, 0.00820052251, 0, 1, 0, -0.00820052251, 0, 0.999966383)
+
+    if isEnabled then
+        
+        AcidPart.CFrame = AcidPart.CFrame * CFrame.new(0,-300,0)
+
+    else
+
+        AcidPart.CFrame = defaultCFrame
+
+    end
+
+end
+
+_G.antiacid = false
+
 local AntiAcid = STab:Toggle({
     Title = "Anti Acid",
     Desc = "Puts a part on top of Acid to prevent you from falling in.",
@@ -274,10 +319,13 @@ local AntiAcid = STab:Toggle({
     Callback = function(state) 
         
         workspace:FindFirstChild("AntiAcid").CanCollide = state
-        AcidPart.CanTouch = state
+        toggleAcid(state)
+        _G.antiacid = state
 
     end
 })
+
+_G.antilava = false
 
 local AntiLava = STab:Toggle({
     Title = "Anti Lava",
@@ -288,7 +336,8 @@ local AntiLava = STab:Toggle({
     Callback = function(state) 
         
         workspace:FindFirstChild("AntiLava").CanCollide = state
-        LavaPart.CanTouch = state
+        toggleLava(state)
+        _G.antilava = state
 
     end
 })
@@ -389,8 +438,8 @@ local function UnderSet(anti : boolean)
     
     if anti == true then
         
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
+        toggleAcid(false)
+        toggleLava(false)
 
     end
     
@@ -406,46 +455,132 @@ end
 
 _G.ignorefriendskillall = true
 
+local function playersAlive()
+
+    local alive = 0
+
+    for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
+
+        if plr.Character and plr.Character:FindFirstChild("Dead") == nil then
+            
+            alive += 1
+
+        end
+
+    end
+
+    return alive
+
+end
+
+local lastPlayer = game.Players.LocalPlayer
+
+local function findNearestPlayer()
+
+    local nearestDistance = 100000
+    local nearestPlayer
+
+    if playersAlive() > 2 then
+
+        for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
+            
+            if plr ~= game.Players.LocalPlayer then
+                
+                local distance = (game.Players.LocalPlayer.Character.Torso.Position - plr.Character.Torso.Position).Magnitude
+
+                local bunkerDistance = (bunkerPart.CFrame.Position - plr.Character.Torso.CFrame.Position).Magnitude
+
+                if distance < nearestDistance and bunkerDistance >= 110 and plr ~= lastPlayer then
+                    
+                    nearestDistance = distance
+                    nearestPlayer = plr
+
+                end
+
+            end
+
+        end
+
+    elseif playersAlive() == 2 then
+
+        for _, plr in ipairs(game:GetService("Players"):GetPlayers()) do
+            
+            if plr ~= game.Players.LocalPlayer then
+                
+                nearestPlayer = plr
+
+            end
+
+        end
+
+    end
+
+    lastPlayer = nearestPlayer
+
+    return nearestPlayer
+
+end
+
 local function killallplayers()
 
     repeat
 
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
+        task.wait()
+
+        toggleAcid(false)
+        toggleLava(false)
 
         killing = true
 
-        for _, PickedPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+        local PickedPlayer = findNearestPlayer()
 
-            local bunkerDistance = (bunkerPart.CFrame.Position - PickedPlayer.Character.Torso.CFrame.Position).Magnitude
+        local bunkerDistance = (bunkerPart.CFrame.Position - PickedPlayer.Character.Torso.CFrame.Position).Magnitude
             
-            if PickedPlayer ~= game.Players.LocalPlayer and not PickedPlayer.Character:FindFirstChild("Dead") and bunkerDistance >= 110 and _G.killall == true then
+        if PickedPlayer ~= nil and PickedPlayer ~= game.Players.LocalPlayer and not PickedPlayer.Character:FindFirstChild("Dead") and bunkerDistance >= 110 and _G.killall == true then
 
-                if PickedPlayer:IsFriendsWith(game.Players.LocalPlayer.UserId) and _G.ignorefriendskillall == true then return end
+            if PickedPlayer:IsFriendsWith(game.Players.LocalPlayer.UserId) == true and _G.ignorefriendskillall == true then
                 
-                local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - PickedPlayer.Character:FindFirstChild("Torso").Position).Magnitude
+                print("are friends, ignored")
 
-                local tweenTime = 3
+            else
 
-                if distance >= 700 and distance <= 1000 then
+            local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - PickedPlayer.Character:FindFirstChild("Torso").Position).Magnitude
+
+            local tweenTime = 2
+
+            if distance >= 700 and distance <= 1000 then
                     
-                    tweenTime = 4
+                    tweenTime = 3
 
                 elseif distance >= 1000 then
 
-                    tweenTime = 6
+                    tweenTime = 5
 
                 elseif distance >= 0 and distance <= 300 then
 
-                    tweenTime = 1
+                    tweenTime = 1.5
 
                 end
 
-                game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = PickedPlayer.Character:WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-15,0)}):Play()
+                local plrCFrame = PickedPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
+
+                game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = CFrame.new(plrCFrame.X, plrCFrame.Y - 15, plrCFrame.Z)}):Play()
 
                 glove.Parent = game.Players.LocalPlayer.Character
 
                 task.wait(tweenTime)
+
+                local timespent = 0
+
+                spawn(function()
+                    
+                    while task.wait(1) do
+
+                        timespent += 1
+
+                    end
+
+                end)
 
                 repeat
                     
@@ -457,7 +592,7 @@ local function killallplayers()
 
                     task.wait()
 
-                until PickedPlayer == nil or PickedPlayer.Character:FindFirstChild("Ragdolled").Value == true or _G.killall == false or PickedPlayer.Character:FindFirstChild("Dead")
+                until PickedPlayer == nil or PickedPlayer.Character:FindFirstChild("Ragdolled").Value == true or _G.killall == false or PickedPlayer.Character:FindFirstChild("Dead") or timespent >= 3
 
             end
 
@@ -466,8 +601,8 @@ local function killallplayers()
     until _G.killall == false or game.Players.LocalPlayer.PlayerGui:FindFirstChild("WinScreen"):FindFirstChild("WinScreen").Visible == true
 
     killing = false
-    AcidPart.CanTouch = true
-    LavaPart.CanTouch = true
+    toggleAcid(_G.antiacid)
+    toggleLava(_G.antilava)
 
     local targetCFrame = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
 
@@ -477,7 +612,7 @@ end
 
 local KillAll = CTab:Toggle({
     Title = "Kill All",
-    Desc = "NOT RECOMMENDED EARLY IN THE MATCH",
+    Desc = "High chance of getting votekicked, recommended to use later in the match.",
     Type = "Checkbox",
     Default = false,
     Callback = function(state) 
@@ -625,6 +760,28 @@ end)
 
 _G.priorityitem = "None"
 
+local function priorityPossible()
+
+    local priorityPossible = false
+
+    for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
+
+        local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
+
+        if item.Name == _G.priorityitem and bunkerDistance >= 110 then
+            
+            priorityPossible = true
+
+            break
+
+        end
+
+    end
+
+    return priorityPossible
+
+end
+
 local function findNearestItem()
 
     local nearestDistance = 100000
@@ -643,12 +800,12 @@ local function findNearestItem()
 
         local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
-        if distance < nearestDistance and bunkerDistance >= 110 and workspace:FindFirstChild("Items"):FindFirstChild(_G.priorityitem) == nil then
+        if distance < nearestDistance and bunkerDistance >= 110 and priorityPossible() == false then
                     
             nearestDistance = distance
             nearestItem = item
 
-        elseif item.Name == _G.priorityitem and distance < nearestDistance and bunkerDistance >= 110 and workspace:FindFirstChild("Items"):FindFirstChild(_G.priorityitem) then
+        elseif item.Name == _G.priorityitem and distance < nearestDistance and bunkerDistance >= 110 and priorityPossible() then
 
             nearestDistance = distance
             nearestItem = item
@@ -788,9 +945,9 @@ local ItemTP = ITab:Dropdown({
             local ItemX = itemCFrame.X
             local ItemZ = itemCFrame.Z
 
-            AcidPart.CanTouch = false
-            LavaPart.CanTouch = false
-    
+            toggleAcid(false)
+            toggleLava(false)
+            
             game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {CFrame = CFrame.new(ItemX, -80, ItemZ)}):Play()
             
             task.wait(tweenTime)
@@ -855,9 +1012,9 @@ local ItemTP = ITab:Dropdown({
     
             game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
 
-            AcidPart.CanTouch = true
-            LavaPart.CanTouch = true
-    
+            toggleAcid(_G.antiacid)
+            toggleLava(_G.antilava)
+
             TPdb = true
     
             end
@@ -1133,9 +1290,9 @@ local KillPlayer = PTab:Toggle({
 
         if game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and not game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started and state == true then
 
-            AcidPart.CanTouch = false
-            LavaPart.CanTouch = false
-    
+            toggleAcid(false)
+            toggleLava(false)
+
             killing = true
     
             local oldCFrame = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
@@ -1187,9 +1344,9 @@ local KillPlayer = PTab:Toggle({
             game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
 
             killing = false
-            AcidPart.CanTouch = true
-            LavaPart.CanTouch = true
-    
+            toggleAcid(_G.antiacid)
+            toggleLava(_G.antilava)
+
             elseif game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started and state == true then
     
                 WindUI:Notify({
@@ -1217,8 +1374,8 @@ local TpPlayer = PTab:Button({
             local plrX = plrCFrame.X
             local plrZ = plrCFrame.Z
 
-            AcidPart.CanTouch = false
-            LavaPart.CanTouch = false
+            toggleAcid(false)
+            toggleLava(false)
 
             UnderSet()
 
@@ -1242,8 +1399,8 @@ local TpPlayer = PTab:Button({
 
             game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = plrCFrame * CFrame.new(0,10,0)
 
-            AcidPart.CanTouch = true
-            LavaPart.CanTouch = true
+            toggleAcid(_G.antiacid)
+            toggleLava(_G.antilava)
 
         end
 
@@ -1382,9 +1539,13 @@ local RJMatchmaking = Tab:Button({
 
         if player ~= localPlayer then
 
-          if player:IsFriendsWith(localPlayer.UserId) and _G.slapauraignorefriends == true then return end
+          if player:IsFriendsWith(localPlayer.UserId) and _G.slapauraignorefriends == true then
+            
+            print("ignored, are friends.")
 
-          local char1 = localPlayer.Character
+          else
+
+        local char1 = localPlayer.Character
 
           local char2 = player.Character
 
@@ -1401,6 +1562,8 @@ local RJMatchmaking = Tab:Button({
               game:GetService("ReplicatedStorage").Events.Slap:FireServer(char2.Torso)
 
             end
+
+          end
 
           end
 
