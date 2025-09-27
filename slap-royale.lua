@@ -381,19 +381,9 @@ local SlapSpeed = CTab:Dropdown({
     end
 })
 
-spawn(function()
-    
-    while task.wait(.1) do
-        
-        if started then
-            
-            glove.Config.AttackCD.Value = _G.attackspeed
+_G.killall = false
 
-        end
-
-    end
-
-end)
+local killing = false
 
 local function UnderSet(anti : boolean)
     
@@ -413,6 +403,121 @@ local function UnderSet(anti : boolean)
     task.wait(1.5)
 
 end
+
+_G.ignorefriendskillall = true
+
+local function killallplayers()
+
+    repeat
+
+        AcidPart.CanTouch = false
+        LavaPart.CanTouch = false
+
+        killing = true
+
+        for _, PickedPlayer in ipairs(game:GetService("Players"):GetPlayers()) do
+
+            local bunkerDistance = (bunkerPart.CFrame.Position - PickedPlayer.Character.Torso.CFrame.Position).Magnitude
+            
+            if PickedPlayer ~= game.Players.LocalPlayer and not PickedPlayer.Character:FindFirstChild("Dead") and bunkerDistance >= 110 and _G.killall == true then
+
+                if PickedPlayer:IsFriendsWith(game.Players.LocalPlayer.UserId) and _G.ignorefriendskillall == true then return end
+                
+                local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - PickedPlayer.Character:FindFirstChild("Torso").Position).Magnitude
+
+                local tweenTime = 3
+
+                if distance >= 700 and distance <= 1000 then
+                    
+                    tweenTime = 4
+
+                elseif distance >= 1000 then
+
+                    tweenTime = 6
+
+                elseif distance >= 0 and distance <= 300 then
+
+                    tweenTime = 1
+
+                end
+
+                game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = PickedPlayer.Character:WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-15,0)}):Play()
+
+                glove.Parent = game.Players.LocalPlayer.Character
+
+                task.wait(tweenTime)
+
+                repeat
+                    
+                    local targetCFrame = PickedPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
+
+                    game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, targetCFrame.Y - 15, targetCFrame.Z)
+
+                    game:GetService("ReplicatedStorage").Events.Slap:FireServer(PickedPlayer.Character:WaitForChild("Left Leg"))
+
+                    task.wait()
+
+                until PickedPlayer == nil or PickedPlayer.Character:FindFirstChild("Ragdolled").Value == true or _G.killall == false or PickedPlayer.Character:FindFirstChild("Dead")
+
+            end
+
+        end
+
+    until _G.killall == false or game.Players.LocalPlayer.PlayerGui:FindFirstChild("WinScreen"):FindFirstChild("WinScreen").Visible == true
+
+    killing = false
+    AcidPart.CanTouch = true
+    LavaPart.CanTouch = true
+
+    local targetCFrame = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
+
+    game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, 200, targetCFrame.Z)
+
+end
+
+local KillAll = CTab:Toggle({
+    Title = "Kill All",
+    Desc = "NOT RECOMMENDED EARLY IN THE MATCH",
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
+        
+        _G.killall = state
+
+        if state == true and started then
+            
+            killallplayers()
+
+        end
+
+    end
+})
+
+local IgnoreFriendsKillAll = CTab:Toggle({
+    Title = "Ignore Friends (Kill All)",
+    Desc = "While Kill All is enabled, it will ignore your roblox friends.",
+    Type = "Checkbox",
+    Default = true,
+    Callback = function(state) 
+        
+        _G.ignorefriendskillall = state
+
+    end
+})
+
+spawn(function()
+    
+    while task.wait(.1) do
+        
+        if started then
+            
+            glove.Config.AttackCD.Value = _G.attackspeed
+
+        end
+
+    end
+
+end)
 
 local ItemESP = ITab:Dropdown({
     Title = "Item ESP",
@@ -518,6 +623,8 @@ spawn(function()
 
 end)
 
+_G.priorityitem = "None"
+
 local function findNearestItem()
 
     local nearestDistance = 100000
@@ -526,26 +633,23 @@ local function findNearestItem()
 
     if ItemsPossible == false then
 
-        print("NO ITEMS AVAILABLE FINDNEARESTITEM")
-
         return false
 
     else
 
     for _, item in ipairs(game:GetService("Workspace"):WaitForChild("Items"):GetChildren()) do
-
-        print("for loop, current item : "..item.Name)
                 
         local distance = (item.Handle.Position - game:GetService("Players").LocalPlayer.Character.Torso.Position).Magnitude
 
-        print("findnearestitem distance : "..distance)
-
         local bunkerDistance = (bunkerPart.Position - item.Handle.Position).Magnitude
 
-        print("findnearestitem bunkerdistance : "..bunkerDistance)
-
-        if distance < nearestDistance and bunkerDistance >= 110 then
+        if distance < nearestDistance and bunkerDistance >= 110 and workspace:FindFirstChild("Items"):FindFirstChild(_G.priorityitem) == nil then
                     
+            nearestDistance = distance
+            nearestItem = item
+
+        elseif item.Name == _G.priorityitem and distance < nearestDistance and bunkerDistance >= 110 and workspace:FindFirstChild("Items"):FindFirstChild(_G.priorityitem) then
+
             nearestDistance = distance
             nearestItem = item
 
@@ -561,15 +665,9 @@ end
 
 local function grabItemNoDB()
 
-        print("grabitemnodb")
-
         local nItem = findNearestItem()
 
-        print("grabitemnodb passed all. problem is grabitemnodb")
-
         if nItem == false then
-
-            print("no item grabitemnodb")
 
             return false
 
@@ -784,38 +882,43 @@ local ItemTP = ITab:Dropdown({
 
 local graballdb = true
 
-local GrabAll = ITab:Button({
+local GrabAll = ITab:Toggle({
     Title = "Grab All Items",
     Desc = "Smoothly teleports under the map and grabs all items.",
-    Locked = false,
-    Callback = function()
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
 
-        print("graballbutton")
+        _G.graball = state
 
-    if graballdb and ItemsPossible == true then
+        if graballdb and ItemsPossible == true and state == true then
+    
+            graballdb = false
+    
+            repeat
+    
+                grabItemNoDB()
+    
+            until grabItemNoDB() == false or _G.graball == false
 
-        print("exists and stuff grabitemall")
+            if _G.graball == false and game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame.Y < -55 then
+                
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame.X, 200, game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame.Z)
 
-        graballdb = false
-
-        repeat
-
-            grabItemNoDB()
-
-        until grabItemNoDB() == false
-
-        graballdb = true
-
-    elseif ItemsPossible == false then
-
-        WindUI:Notify({
-            Title = "No Items",
-            Content = "There are no more items for you to pick up",
-            Duration = 3, -- 3 seconds
-            Icon = "info",
-        })
-
-    end
+            end
+    
+            graballdb = true
+    
+        elseif ItemsPossible == false and state == true then
+    
+            WindUI:Notify({
+                Title = "No Items",
+                Content = "There are no more items for you to pick up",
+                Duration = 3, -- 3 seconds
+                Icon = "info",
+            })
+    
+        end
 
     end
 })
@@ -824,6 +927,17 @@ local SettingsSection = ITab:Section({
     Title = "",
     TextXAlignment = "Left",
     TextSize = 17, -- Default Size
+})
+
+local PriorityItems = ITab:Dropdown({
+    Title = "Prioritized Item (Grab All)",
+    Values = {"None", "Bull's essence", "True Power", "Potion of Strength", "Boba", "Bomb", "Forcefield Crystal", "Apple", "Bandage", "First Aid Kit", "Cube of Ice", "Frog Potion", "Speed Potion", "Lightning Potion", "Healing Potion"},
+    Value = "None",
+    Callback = function(option) 
+            
+        _G.priorityitem = option
+
+    end
 })
 
 local AutoPerm = ITab:Toggle({
@@ -850,6 +964,8 @@ local AutoIce = ITab:Toggle({
     end
 })
 
+_G.slapauraignorefriends = true
+
 local SlapAura = CTab:Toggle({
     Title = "Slap Aura",
     Desc = "Slaps everybody up to 20 studs away from you.",
@@ -859,6 +975,18 @@ local SlapAura = CTab:Toggle({
     Callback = function(state) 
         
         _G.slapaura = state
+
+    end
+})
+
+local SlapAuraIgnoreFriends = CTab:Toggle({
+    Title = "Ignore Friends (Slap Aura)",
+    Desc = "While Slap Aura is enabled, it will ignore your roblox friends.",
+    Type = "Checkbox",
+    Default = true,
+    Callback = function(state) 
+        
+        _G.slapauraignorefriends = state
 
     end
 })
@@ -994,87 +1122,85 @@ local Plr = PTab:Input({
     end
 })
 
-local killing = false
-
-local KillPlayer = PTab:Button({
+local KillPlayer = PTab:Toggle({
     Title = "Kill Player",
     Desc = "Kills player and then returns to the location you were at.",
-    Locked = false,
-    Callback = function()
-        
-        if game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and not game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started then
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state) 
+       
+        _G.killplayer = state
 
-        AcidPart.CanTouch = false
-        LavaPart.CanTouch = false
+        if game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and not game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started and state == true then
 
-        ItemTP:Lock()
-        GrabAll:Lock()
-        killing = true
+            AcidPart.CanTouch = false
+            LavaPart.CanTouch = false
+    
+            killing = true
+    
+            local oldCFrame = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
+            local oldX = oldCFrame.X
+            local oldZ = oldCFrame.Z
+    
+            local oldUnder = CFrame.new(oldX, -80, oldZ)
+    
+            local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - workspace:FindFirstChild(PickedPlayer):FindFirstChild("Torso").Position).Magnitude
+    
+            local tweenTime = 2
+    
+            if distance >= 1500 and distance <= 3000 then
+                
+                tweenTime = 4
+    
+            elseif distance >= 3000 then
+    
+                tweenTime = 6
+    
+            end
+    
+            UnderSet()
+    
+            game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-15,0)}):Play()
+    
+            glove.Parent = game.Players.LocalPlayer.Character
+    
+            task.wait(tweenTime)
+    
+            repeat
+                
+                local targetCFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame
+    
+                game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, targetCFrame.Y - 15, targetCFrame.Z)
+    
+                game:GetService("ReplicatedStorage").Events.Slap:FireServer(game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Left Leg"))
+    
+                task.wait()
+    
+            until game:GetService("Players"):FindFirstChild(PickedPlayer) == nil or game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") or _G.killplayer == false
+    
+            UnderSet()
+    
+            game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = oldUnder}):Play()
+    
+            task.wait(2)
+    
+            game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
 
-        local oldCFrame = game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
-        local oldX = oldCFrame.X
-        local oldZ = oldCFrame.Z
-
-        local oldUnder = CFrame.new(oldX, -80, oldZ)
-
-        local distance = (game.Players.LocalPlayer.Character:WaitForChild("Torso").Position - workspace:FindFirstChild(PickedPlayer):FindFirstChild("Torso").Position).Magnitude
-
-        local tweenTime = 2
-
-        if distance >= 1500 and distance <= 3000 then
-            
-            tweenTime = 4
-
-        elseif distance >= 3000 then
-
-            tweenTime = 6
-
-        end
-
-        UnderSet()
-
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame * CFrame.new(0,-15,0)}):Play()
-
-        glove.Parent = game.Players.LocalPlayer.Character
-
-        task.wait(tweenTime)
-
-        repeat
-            
-            local targetCFrame = workspace:FindFirstChild(PickedPlayer):WaitForChild("HumanoidRootPart").CFrame
-
-            game:GetService("Players").LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(targetCFrame.X, targetCFrame.Y - 15, targetCFrame.Z)
-
-            game:GetService("ReplicatedStorage").Events.Slap:FireServer(game:GetService("Players"):FindFirstChild(PickedPlayer).Character:WaitForChild("Left Leg"))
-
-            task.wait()
-
-        until game:GetService("Players"):FindFirstChild(PickedPlayer) == nil or game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead")
-
-        UnderSet()
-
-        game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"), TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {CFrame = oldUnder}):Play()
-
-        task.wait(2)
-
-        game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = oldCFrame
-
-        ItemTP:Unlock()
-        GrabAll:Unlock()
-        killing = false
-        AcidPart.CanTouch = true
-        LavaPart.CanTouch = true
-
-        elseif game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started then
-
-            WindUI:Notify({
-                Title = "Could not Kill Player",
-                Content = "The selected player is already dead.",
-                Duration = 3, -- 3 seconds
-                Icon = "info",
-            })
-
-        end
+            killing = false
+            AcidPart.CanTouch = true
+            LavaPart.CanTouch = true
+    
+            elseif game:GetService("Players"):FindFirstChild(PickedPlayer) and game:GetService("Players"):FindFirstChild(PickedPlayer).Character and game:GetService("Players"):FindFirstChild(PickedPlayer).Character:FindFirstChild("Dead") and started and state == true then
+    
+                WindUI:Notify({
+                    Title = "Could not Kill Player",
+                    Content = "The selected player is already dead.",
+                    Duration = 3, -- 3 seconds
+                    Icon = "info",
+                })
+    
+            end
+    
 
     end
 })
@@ -1133,11 +1259,15 @@ spawn(function()
         if killing == true then
             
             TpPlayer:Lock()
+            ItemTP:Lock()
+            GrabAll:Lock()
             locked = true
 
         elseif killing == false and locked == true then
 
             TpPlayer:Unlock()
+            ItemTP:Unlock()
+            GrabAll:Unlock()
             locked = false
 
         end
@@ -1247,22 +1377,37 @@ local RJMatchmaking = Tab:Button({
         end
 
       if _G.slapaura == true and started then
+
       for _, player in ipairs(Players:GetPlayers()) do
+
         if player ~= localPlayer then
+
+          if player:IsFriendsWith(localPlayer.UserId) and _G.slapauraignorefriends == true then return end
+
           local char1 = localPlayer.Character
+
           local char2 = player.Character
+
     
           if char1 and char2.Ragdolled.Value == false and char1:FindFirstChild("HumanoidRootPart") and not char1:FindFirstChild("Dead") and char2 and char2:FindFirstChild("HumanoidRootPart") and char2.Ragdolled.Value == false and not char2:FindFirstChild("Dead") then
+            
             local pos1 = char1.HumanoidRootPart.Position
             local pos2 = char2.HumanoidRootPart.Position
     
             local distance = (pos1 - pos2).Magnitude
+
             if distance <= auradistance then
+
               game:GetService("ReplicatedStorage").Events.Slap:FireServer(char2.Torso)
+
             end
+
           end
+
         end
+
       end
+
       end
 
     end
